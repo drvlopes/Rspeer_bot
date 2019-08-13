@@ -31,7 +31,7 @@ import org.rspeer.ui.Log;
 import static org.rspeer.runetek.api.commons.Time.sleepUntil;
 import static org.rspeer.runetek.api.commons.Time.sleepUntilForDuration;
 
-@ScriptMeta(name = "Rspeer_test",  desc = "Just a test", developer = "TbpT", category = ScriptCategory.OTHER)
+@ScriptMeta(name = "QuestMaker",  desc = "quest maker converted for rspeer", developer = "TbpT", category = ScriptCategory.OTHER)
 public class Main extends Script implements ChatMessageListener, LoginResponseListener {
 
     private static final Area COOK_AREA = Area.rectangular(3210, 3212, 3205, 3217);
@@ -54,13 +54,14 @@ public class Main extends Script implements ChatMessageListener, LoginResponseLi
     public void notify(LoginResponseEvent loginResponseEvent) {
         Log.severe(" " + loginResponseEvent.getResponse().toString());
         if(loginResponseEvent.getResponse() == LoginResponseEvent.Response.MEMBERSHIP_REQUIRED){
-            Game.getClient().setLoginWorldSelectorOpen(true);
-            sleepUntil(() -> Game.getClient().isLoginWorldSelectorOpen(), 1000, 5000);
-            Time.sleep(Random.nextInt(1000, 3000));
-            Game.getClient().setWorld(Worlds.get(mundosF2P[Random.nextInt(0, mundosF2P.length-1)]));
-            Game.getClient().setLoginWorldSelectorOpen(false);
-            sleepUntil(() -> !Game.getClient().isLoginWorldSelectorOpen(), 1000, 5000);
-            Time.sleep(Random.nextInt(1000, 3000));
+            setStopping(true);
+//            Game.getClient().setLoginWorldSelectorOpen(true);
+//            sleepUntil(() -> Game.getClient().isLoginWorldSelectorOpen(), 1000, 5000);
+//            Time.sleep(Random.nextInt(1000, 3000));
+//            Game.getClient().setWorld(Worlds.get(mundosF2P[Random.nextInt(0, mundosF2P.length-1)]));
+//            Game.getClient().setLoginWorldSelectorOpen(false);
+//            sleepUntil(() -> !Game.getClient().isLoginWorldSelectorOpen(), 1000, 5000);
+//            Time.sleep(Random.nextInt(1000, 3000));
         }
     }
 
@@ -363,7 +364,7 @@ public class Main extends Script implements ChatMessageListener, LoginResponseLi
 
     private void SheepShearercheck(){
         if(Varps.get(179) == 1){
-            s_state = Sheep_state.TALK_FARMER;
+            s_state = Sheep_state.USE_WHEEL;
         }
 
     }
@@ -481,7 +482,7 @@ public class Main extends Script implements ChatMessageListener, LoginResponseLi
                 else {
                     if (Inventory.getCount("Wool") < 20) {
                         if (!Inventory.isFull()) {
-                            sheep.interact("Shear");
+                            sheep.interact("Shear");//TODO:still not working properly
                             sleepUntil(() -> Players.getLocal().isAnimating(),25, Random.nextInt(5000, 7000));
                             sleepUntil(() -> !Players.getLocal().isAnimating(),25, Random.nextInt(5000, 7000));
                         } else {
@@ -504,7 +505,7 @@ public class Main extends Script implements ChatMessageListener, LoginResponseLi
                 if(Inventory.getCount("Ball of wool") < 20) {
                     if(Inventory.getCount("Wool") != 0) {
                         SceneObject wheel = SceneObjects.getNearest("Spinning wheel");
-                        wheel.interact("Spin");
+                        wheel.interact("Spin");//TODO:not working
                         sleepUntil(() -> Interfaces.isOpen(270), 25, Random.nextInt(5000, 7000));
                         Interfaces.getComponent(270, 14).interact("Spin");
                         sleepUntilForDuration(() -> !Players.getLocal().isAnimating(), Random.nextInt(1500, 1700), 25, Random.nextInt(5000, 7000));
