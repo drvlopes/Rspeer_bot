@@ -7,6 +7,7 @@ import org.rspeer.runetek.adapter.scene.Player;
 import org.rspeer.runetek.api.Game;
 import org.rspeer.runetek.api.commons.BankLocation;
 import org.rspeer.runetek.api.commons.math.Random;
+import org.rspeer.runetek.api.commons.predicate.Predicates;
 import org.rspeer.runetek.api.component.Bank;
 import org.rspeer.runetek.api.component.tab.Inventory;
 import org.rspeer.runetek.api.local.Health;
@@ -15,7 +16,6 @@ import org.rspeer.runetek.api.movement.position.Area;
 import org.rspeer.runetek.api.scene.Npcs;
 import org.rspeer.runetek.api.scene.Pickables;
 import org.rspeer.runetek.api.scene.Players;
-import org.rspeer.runetek.providers.RSHealthBar;
 import org.rspeer.script.Script;
 import org.rspeer.script.ScriptCategory;
 import org.rspeer.script.ScriptMeta;
@@ -43,6 +43,7 @@ public class Main extends Script {
     Timer timer;
 
     private int N_logs4Fire = 0; //Number of logs to get before starting firemaking
+    private int N_hide4state = 10000; // Number of cowhides to change state
 
     private static final Predicate<Item> BONES_PREDICATE = item -> item.getName().contains("Bones");
 
@@ -155,6 +156,13 @@ public class Main extends Script {
                         Movement.toggleRun(true);
                     cowhide.interact("Take");
                     sleepUntilForDuration(() -> !Players.getLocal().isMoving() || cowhide.containsAction("Take"),Random.nextInt(900,1100), 25, Random.nextInt(5000, 7000));
+                    if(Random.nextBoolean()){
+                        Pickable bones = Pickables.getNearest("Bones");
+                        if(bones != null && bones.distance() < 2){
+                            bones.interact("Take");
+                            sleepUntilForDuration(() -> !Players.getLocal().isMoving() || bones.containsAction("Take"),Random.nextInt(900,1100), 25, Random.nextInt(5000, 7000));
+                        }
+                    }
                 } else {
                     Npc cow = Npcs.getNearest(c -> c != null && (c.getName().equals("Cow") || c.getName().equals("Cow calf")) && !c.isHealthBarVisible());
                     if (cow != null) {
@@ -167,11 +175,11 @@ public class Main extends Script {
 
     private boolean lifecheck(){
         if (Health.getCurrent() <= 2) {
-            Log.severe(Health.getCurrent());
+            Log.severe("Health level: " + Health.getCurrent());
             return true;
         }
         else {
-            Log.fine(Health.getCurrent());
+            Log.fine("Health level: " + Health.getCurrent());
             return false;
         }
     }
@@ -189,11 +197,16 @@ public class Main extends Script {
         Bank.open(BankLocation.getNearestBooth());
         if (sleepUntil(() -> Bank.isOpen(), 25, Random.nextInt(5000, 7000))) {
             if (sleepUntil(() -> Bank.depositAllExcept("Potato", "Bones"), 25, Random.nextInt(15000, 20000)))
-                if (Inventory.getCount() <= 8) {
+                Log.info("Total cowhide-> " + Bank.getCount("Cowhide"));
+                if (Bank.getCount("Cowhide") <= N_hide4state) {
                     Bank.close();
                     if (sleepUntil(() -> Bank.isClosed(), 25, Random.nextInt(15000, 20000))) {
-                        subState = predictedState;
+                        if(Health.getCurrent() < 7)
+                            subState = SubState.GO_POTATO;//TODO:WHEN GOING GET FOOD takes subState = predictedState;
                     }
+                }
+            else{
+                //TODO:CHANGE STATE
                 }
         }
     }
