@@ -191,7 +191,6 @@ public class Main extends Script implements ChatMessageListener, LoginResponseLi
 
     @Override
     public void onStop() {
-        Log.severe("Y U DO DIS!");
     }
 
     private void CooksAssistantcheck() {
