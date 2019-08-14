@@ -1,11 +1,9 @@
 package MainScript;
 
-import org.rspeer.runetek.adapter.Interactable;
 import org.rspeer.runetek.adapter.component.Item;
 import org.rspeer.runetek.adapter.scene.Npc;
 import org.rspeer.runetek.adapter.scene.Pickable;
 import org.rspeer.runetek.adapter.scene.Player;
-import org.rspeer.runetek.adapter.scene.SceneObject;
 import org.rspeer.runetek.api.commons.math.Random;
 import org.rspeer.runetek.api.component.tab.Inventory;
 import org.rspeer.runetek.api.movement.Movement;
@@ -23,6 +21,7 @@ import java.util.TimerTask;
 import java.util.function.Predicate;
 
 import static org.rspeer.runetek.api.commons.Time.sleepUntil;
+import static org.rspeer.runetek.api.commons.Time.sleepUntilForDuration;
 
 @ScriptMeta(name = "MainScript",  desc = "manages bot", developer = "TbpT", category = ScriptCategory.MONEY_MAKING)
 public class Main extends Script {
@@ -87,7 +86,6 @@ public class Main extends Script {
     }
 
     private void onHideGrab(){
-        Log.fine(Players.getLocal().getHealthPercent());
         switch (subState){
             case GO_BANK:
                 if(BANK_AREA.contains(Players.getLocal())){
@@ -131,7 +129,7 @@ public class Main extends Script {
                 onLowLife();
             }
             else{
-
+                sleepUntilForDuration(() -> !Players.getLocal().isAnimating(),Random.nextInt(1500,2000), 25, Random.nextInt(5000, 7000));
             }
         }
         else {
@@ -149,7 +147,7 @@ public class Main extends Script {
                 Pickable cowhide = Pickables.getNearest("Cowhide");
                 if (cowhide != null) {
                     cowhide.interact("Take");
-                    sleepUntil(() -> !Players.getLocal().isAnimating() || cowhide.containsAction("Take"), 25, Random.nextInt(5000, 7000));
+                    sleepUntil(() -> !Players.getLocal().isMoving() || cowhide.containsAction("Take"), 25, Random.nextInt(5000, 7000));
                 } else {
                     Npc cow = Npcs.getNearest(c -> c != null && (c.getName().equals("Cow") || c.getName().equals("Cow calf")) && !c.isHealthBarVisible());
                     if (cow != null) {
@@ -160,19 +158,24 @@ public class Main extends Script {
         }
     }
 
-    private boolean lifecheck(){ //TODO: needs to be checked
-        if(Players.getLocal().getHealthPercent() < 10){
+    private boolean lifecheck(){ //TODO: needs to be checked maybe not getHealthPercent()
+        if (Players.getLocal().getHealthPercent() <= 20) {
+            Log.severe(Players.getLocal().getHealthPercent());
             return true;
         }
-        else
+        else {
+            Log.fine(Players.getLocal().getHealthPercent());
             return false;
+        }
     }
 
     private void onLowLife(){
-        if(Inventory.getCount() > 20){
+        if(Inventory.getCount() > 18){
             subState = SubState.GO_BANK;
             predictedState = SubState.GO_POTATO;
         }
+        else
+            subState = SubState.GO_POTATO;
     }
 
     private void onBank(){
@@ -185,9 +188,9 @@ public class Main extends Script {
 
     private void walk(Area TargetArea) {
         Player local = Players.getLocal();
-        if (sleepUntil(() -> !local.isMoving() || Movement.getDestinationDistance() < Random.nextInt(3, 6),25, Random.nextInt(5000, 7000))){
-            if (!TargetArea.contains(local)){
-                if(Movement.getRunEnergy() > Random.nextInt(8, 15) && !Movement.isRunEnabled())
+        if (sleepUntil(() -> !local.isMoving() || (Movement.getDestinationDistance() < Random.nextInt(3, 6)),25, Random.nextInt(5000, 7000))) {
+            if (!TargetArea.contains(local)) {
+                if (Movement.getRunEnergy() > Random.nextInt(8, 15) && !Movement.isRunEnabled())
                     Movement.toggleRun(true);
                 Movement.walkTo(TargetArea.getCenter().randomize(Random.nextInt(1, 4)));
             }
