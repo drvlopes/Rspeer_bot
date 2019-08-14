@@ -18,6 +18,8 @@ import org.rspeer.script.ScriptCategory;
 import org.rspeer.script.ScriptMeta;
 import org.rspeer.ui.Log;
 
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.function.Predicate;
 
 import static org.rspeer.runetek.api.commons.Time.sleepUntil;
@@ -34,6 +36,8 @@ public class Main extends Script {
     private State state;
     private SubState subState, predictedState;
 
+    Timer timer;
+
     private int N_logs4Fire = 0; //Number of logs to get before starting firemaking
 
     private static final Predicate<Item> BONES_PREDICATE = item -> item.getName().contains("Bones");
@@ -41,6 +45,29 @@ public class Main extends Script {
     @Override
     public void onStart() {
         Log.info("Bot has been initialized!");
+
+        if(Random.nextBoolean())
+            Reminder(Random.nextInt(40,60));
+        else
+            Reminder(Random.nextInt(100,140));
+
+        state = State.HIDE_GRAB;
+        if(state == State.HIDE_GRAB)
+            subState = SubState.GO_COW;
+
+    }
+
+    public void Reminder(int minutes) {
+        timer = new Timer();
+        timer.schedule(new RemindTask(), minutes * 60000);
+    }
+
+    class RemindTask extends TimerTask {
+        public void run() {
+            System.out.println("Time's up!");
+            onGoodbye();
+            timer.cancel(); //Terminate the timer thread
+        }
     }
 
     @Override
@@ -60,6 +87,7 @@ public class Main extends Script {
     }
 
     private void onHideGrab(){
+        Log.fine(Players.getLocal().getHealthPercent());
         switch (subState){
             case GO_BANK:
                 if(BANK_AREA.contains(Players.getLocal())){
@@ -148,6 +176,10 @@ public class Main extends Script {
     }
 
     private void onBank(){
+
+    }
+
+    private void onGoodbye(){
 
     }
 
