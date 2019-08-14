@@ -4,13 +4,18 @@ import org.rspeer.runetek.adapter.component.Item;
 import org.rspeer.runetek.adapter.scene.Npc;
 import org.rspeer.runetek.adapter.scene.Pickable;
 import org.rspeer.runetek.adapter.scene.Player;
+import org.rspeer.runetek.api.Game;
+import org.rspeer.runetek.api.commons.BankLocation;
 import org.rspeer.runetek.api.commons.math.Random;
+import org.rspeer.runetek.api.component.Bank;
 import org.rspeer.runetek.api.component.tab.Inventory;
+import org.rspeer.runetek.api.local.Health;
 import org.rspeer.runetek.api.movement.Movement;
 import org.rspeer.runetek.api.movement.position.Area;
 import org.rspeer.runetek.api.scene.Npcs;
 import org.rspeer.runetek.api.scene.Pickables;
 import org.rspeer.runetek.api.scene.Players;
+import org.rspeer.runetek.providers.RSHealthBar;
 import org.rspeer.script.Script;
 import org.rspeer.script.ScriptCategory;
 import org.rspeer.script.ScriptMeta;
@@ -117,6 +122,7 @@ public class Main extends Script {
                 break;
             case FOOD_HANDLER:
 
+
                 break;
         }
 
@@ -125,11 +131,10 @@ public class Main extends Script {
     private void onHideHandler(){
         if(Players.getLocal().getTarget() != null){
             if(lifecheck()){
-                state = State.LOW_LIFE;
                 onLowLife();
             }
             else{
-                sleepUntilForDuration(() -> !Players.getLocal().isAnimating(),Random.nextInt(1500,2000), 25, Random.nextInt(5000, 7000));
+                sleepUntilForDuration(() -> !Players.getLocal().isAnimating(),Random.nextInt(1800,2200), 25, Random.nextInt(5000, 7000));
             }
         }
         else {
@@ -145,9 +150,11 @@ public class Main extends Script {
                 }
             } else {
                 Pickable cowhide = Pickables.getNearest("Cowhide");
-                if (cowhide != null) {
+                if (cowhide != null && cowhide.distance() < 7) {
+                    if (Movement.getRunEnergy() > Random.nextInt(8, 15) && !Movement.isRunEnabled())
+                        Movement.toggleRun(true);
                     cowhide.interact("Take");
-                    sleepUntil(() -> !Players.getLocal().isMoving() || cowhide.containsAction("Take"), 25, Random.nextInt(5000, 7000));
+                    sleepUntilForDuration(() -> !Players.getLocal().isMoving() || cowhide.containsAction("Take"),Random.nextInt(900,1100), 25, Random.nextInt(5000, 7000));
                 } else {
                     Npc cow = Npcs.getNearest(c -> c != null && (c.getName().equals("Cow") || c.getName().equals("Cow calf")) && !c.isHealthBarVisible());
                     if (cow != null) {
@@ -158,13 +165,13 @@ public class Main extends Script {
         }
     }
 
-    private boolean lifecheck(){ //TODO: needs to be checked maybe not getHealthPercent()
-        if (Players.getLocal().getHealthPercent() <= 20) {
-            Log.severe(Players.getLocal().getHealthPercent());
+    private boolean lifecheck(){
+        if (Health.getCurrent() <= 2) {
+            Log.severe(Health.getCurrent());
             return true;
         }
         else {
-            Log.fine(Players.getLocal().getHealthPercent());
+            Log.fine(Health.getCurrent());
             return false;
         }
     }
@@ -178,12 +185,22 @@ public class Main extends Script {
             subState = SubState.GO_POTATO;
     }
 
-    private void onBank(){
-
+    private void onBank() {
+        Bank.open(BankLocation.getNearestBooth());
+        if (sleepUntil(() -> Bank.isOpen(), 25, Random.nextInt(5000, 7000))) {
+            if (sleepUntil(() -> Bank.depositAllExcept("Potato", "Bones"), 25, Random.nextInt(15000, 20000)))
+                if (Inventory.getCount() <= 8) {
+                    Bank.close();
+                    if (sleepUntil(() -> Bank.isClosed(), 25, Random.nextInt(15000, 20000))) {
+                        subState = predictedState;
+                    }
+                }
+        }
     }
 
     private void onGoodbye(){
-
+        Game.logout();
+        setStopping(true);
     }
 
     private void walk(Area TargetArea) {
