@@ -7,7 +7,6 @@ import org.rspeer.runetek.adapter.scene.Player;
 import org.rspeer.runetek.api.Game;
 import org.rspeer.runetek.api.commons.BankLocation;
 import org.rspeer.runetek.api.commons.math.Random;
-import org.rspeer.runetek.api.commons.predicate.Predicates;
 import org.rspeer.runetek.api.component.Bank;
 import org.rspeer.runetek.api.component.tab.Inventory;
 import org.rspeer.runetek.api.local.Health;
@@ -40,6 +39,8 @@ public class Main extends Script {
     private State state;
     private SubState subState, predictedState;
 
+    private Npc global_cow;
+
     Timer timer;
 
     private int N_logs4Fire = 0; //Number of logs to get before starting firemaking
@@ -59,7 +60,6 @@ public class Main extends Script {
         state = State.HIDE_GRAB;
         if(state == State.HIDE_GRAB)
             subState = SubState.GO_COW;
-
     }
 
     public void Reminder(int minutes) {
@@ -122,22 +122,29 @@ public class Main extends Script {
                     walk(POTATO_AREA);
                 break;
             case FOOD_HANDLER:
-
-
+                setStopping(true);//TODO: to be changed
+                subState = SubState.GO_COW;//TODO: to be changed
                 break;
         }
 
     }
 
     private void onHideHandler(){
-        if(Players.getLocal().getTarget() != null){
+        if(global_cow != null){
             if(lifecheck()){
                 onLowLife();
             }
-            else{
-                sleepUntilForDuration(() -> !Players.getLocal().isAnimating(),Random.nextInt(1800,2200), 25, Random.nextInt(5000, 7000));
-            }
+            else
+                sleepUntilForDuration(() -> global_cow.getAnimation() == 5851,Random.nextInt(2200,2400), 25, Random.nextInt(2500, 2700));
         }
+//        if(Players.getLocal().getTarget() != null){
+//            if(lifecheck()){
+//                onLowLife();
+//            }
+//            else{
+//                sleepUntilForDuration(() -> global_cow.getAnimation() == 5851,Random.nextInt(2200,2400), 25, Random.nextInt(120000, 130000));//TODO: while sleeping not changing state(change to a loop until the global_cow is null)
+//            }
+//        }
         else {
             if (Inventory.isFull()) {
                 if (Inventory.contains("Bones")) {
@@ -155,17 +162,18 @@ public class Main extends Script {
                     if (Movement.getRunEnergy() > Random.nextInt(8, 15) && !Movement.isRunEnabled())
                         Movement.toggleRun(true);
                     cowhide.interact("Take");
-                    sleepUntilForDuration(() -> !Players.getLocal().isMoving() || cowhide.containsAction("Take"),Random.nextInt(900,1100), 25, Random.nextInt(5000, 7000));
+                    sleepUntilForDuration(() -> !Players.getLocal().isMoving() || !cowhide.containsAction("Take"),Random.nextInt(900,1100), 25, Random.nextInt(5000, 7000));
                     if(Random.nextBoolean()){
                         Pickable bones = Pickables.getNearest("Bones");
                         if(bones != null && bones.distance() < 2){
                             bones.interact("Take");
-                            sleepUntilForDuration(() -> !Players.getLocal().isMoving() || bones.containsAction("Take"),Random.nextInt(900,1100), 25, Random.nextInt(5000, 7000));
+                            sleepUntilForDuration(() -> !Players.getLocal().isMoving() || !bones.containsAction("Take"),Random.nextInt(900,1100), 25, Random.nextInt(5000, 7000));
                         }
                     }
                 } else {
                     Npc cow = Npcs.getNearest(c -> c != null && (c.getName().equals("Cow") || c.getName().equals("Cow calf")) && !c.isHealthBarVisible());
                     if (cow != null) {
+                        global_cow = cow;
                         cow.interact("Attack");
                     }
                 }

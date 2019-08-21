@@ -28,6 +28,9 @@ import org.rspeer.script.Script;
 import org.rspeer.script.ScriptCategory;
 import org.rspeer.script.ScriptMeta;
 import org.rspeer.ui.Log;
+
+import javax.swing.*;
+
 import static org.rspeer.runetek.api.commons.Time.sleepUntil;
 import static org.rspeer.runetek.api.commons.Time.sleepUntilForDuration;
 
@@ -191,6 +194,7 @@ public class Main extends Script implements ChatMessageListener, LoginResponseLi
 
     @Override
     public void onStop() {
+
     }
 
     private void CooksAssistantcheck() {
@@ -363,15 +367,13 @@ public class Main extends Script implements ChatMessageListener, LoginResponseLi
 
     private void SheepShearercheck(){
         if(Varps.get(179) == 1){
-            s_state = Sheep_state.USE_WHEEL;
+            s_state = Sheep_state.TALK_FARMER;
         }
 
     }
 
     private void executeSheepShearer() {
         Log.info("sheep_state = " + s_state);
-        Log.fine("Progress-> " + Varps.get(315));
-        Log.fine("Status -> " + Varps.get(179));
         switch (s_state){
             case CHECK:
                 if(Inventory.getCount() >= 8){
@@ -418,8 +420,8 @@ public class Main extends Script implements ChatMessageListener, LoginResponseLi
                     s_state = Sheep_state.TALK_FARMER;
                 break;
             case TALK_FARMER:
-                if(Interfaces.getComponent(277,17) != null && Interfaces.getComponent(277,15).isVisible()){
-                    sleepUntil(() -> Interfaces.getComponent(277,15).click(),25,Random.nextInt(4000, 6000));
+                if(Interfaces.getComponent(277,16) != null){
+                    sleepUntil(() -> Interfaces.getComponent(277,16).click(),25,Random.nextInt(4000, 6000));
                     evaluateQuestsState();
                     break;
                 }
